@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BlinkTalk – Eye Communication Assistant</title>
+  <style>
+    body {
+      background-color: #111;
+      color: #00ffff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    h1 { margin-top: 20px; }
+    #container {
+      display: inline-block;
+      background: #222;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px #00ffff33;
+      margin-top: 20px;
+    }
+    video, img {
+      border-radius: 10px;
+      width: 640px;
+      height: 480px;
+      margin-bottom: 15px;
+    }
+    button {
+      background: #00ffff;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover { background: #00dddd; }
+    .status { margin-top: 10px; color: yellow; }
+    .active { color: red; }
+  </style>
+</head>
+<body>
+  <h1>BlinkTalk – Eye Communication Assistant</h1>
+
+  <div id="container">
+    <img src="http://127.0.0.1:5000/video_feed" alt="Live Feed"><br>
+
+    <p>EAR: <span id="ear">0.00</span></p>
+    <p>Pattern: <span id="pattern">-</span></p>
+    <p>Preview: <span id="preview">-</span></p>
+    <p>Final Text: <span id="final_text">-</span></p>
+    <p>Status: <span id="speak_status" class="status">Running...</span></p>
+
+    <button onclick="sendCommand('calibrate')">Calibrate</button>
+    <button onclick="sendCommand('clear')">Clear</button>
+    <button onclick="sendCommand('exit')">Exit</button>
+  </div>
+
+  <script>
+    async function fetchStatus() {
+      try {
+        const res = await fetch('http://127.0.0.1:5000/status');
+        const data = await res.json();
+        document.getElementById('ear').innerText = data.ear.toFixed(2);
+        document.getElementById('pattern').innerText = data.pattern || '-';
+        document.getElementById('preview').innerText = data.preview || '-';
+        document.getElementById('final_text').innerText = data.final_text || '-';
+        const speakEl = document.getElementById('speak_status');
+        if (data.speaking) {
+          speakEl.innerText = 'SPEAKING...';
+          speakEl.className = 'status active';
+        } else {
+          speakEl.innerText = 'Running...';
+          speakEl.className = 'status';
+        }
+      } catch (err) { console.error('Status fetch failed', err); }
+    }
+
+    async function sendCommand(cmd) {
+      await fetch('http://127.0.0.1:5000/command', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ command: cmd })
+      });
+    }
+
+    setInterval(fetchStatus, 500);
+  </script>
+</body>
+</html>
